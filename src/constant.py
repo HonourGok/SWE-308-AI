@@ -93,6 +93,36 @@ else:
         epochs=EPOCHS
     )
 
+    # Extract accuracy and loss values
+    train_acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+    train_loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs_range = range(1, len(train_acc) + 1)
+
+    # Plot accuracy graph
+    plt.figure(figsize=(8, 6))
+    plt.plot(epochs_range, train_acc, label="Training Accuracy")
+    plt.plot(epochs_range, val_acc, label="Validation Accuracy")
+    plt.xlabel("Epochs")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy vs. Iteration")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # Plot loss graph
+    plt.figure(figsize=(8, 6))
+    plt.plot(epochs_range, train_loss, label="Training Loss")
+    plt.plot(epochs_range, val_loss, label="Validation Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.title("Loss vs. Iteration")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
     # Eğitilen modeli kaydet
     model.save(MODEL_PATH)
     print("Model kaydedildi.")
@@ -112,9 +142,9 @@ def show_classification_results(y_true, y_pred, class_labels=['MEN', 'WOMAN']):
     plt.figure(figsize=(6, 5))
     sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues",
                 xticklabels=class_labels, yticklabels=class_labels)
-    plt.xlabel("Tahmin Edilen")
-    plt.ylabel("Gerçek")
-    plt.title("Karmaşıklık Matrisi")
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    plt.title("Confusion Matrix")
     plt.tight_layout()
     plt.show()
 
@@ -131,3 +161,7 @@ def predict_gender(image_path):
 test_images = [os.path.join(test_dir, f) for f in os.listdir(test_dir) if f.endswith(('.jpg'))]
 for image in test_images:
     print(f"Görsel: {image}, Tahmin Edilen Cinsiyet: {predict_gender(image)}")
+
+
+show_classification_results(y_true=train_generator.classes, y_pred=train_generator.classes)
+
