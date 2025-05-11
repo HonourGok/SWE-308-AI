@@ -1,3 +1,5 @@
+import random
+
 import tensorflow as tf
 from tensorflow.keras.applications import ResNet50V2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
@@ -129,9 +131,9 @@ else:
 
 
 def show_classification_results(y_true, y_pred, class_labels=['MEN', 'WOMAN']):
-    # Sınıflandırma raporu
-    print("Sınıflandırma Raporu:")
-    print(classification_report(y_true, y_pred, target_names=class_labels))
+    report = classification_report(y_true, y_pred, target_names=["MEN", "WOMAN"])
+    print("\n📊 Performance Metrics:\n")
+    print(report)
 
     # Karmaşıklık matrisi
     conf_matrix = confusion_matrix(y_true, y_pred)
@@ -159,9 +161,53 @@ def predict_gender(image_path):
 
 # Test görselleri için tahmin
 test_images = [os.path.join(test_dir, f) for f in os.listdir(test_dir) if f.endswith(('.jpg'))]
-for image in test_images:
-    print(f"Görsel: {image}, Tahmin Edilen Cinsiyet: {predict_gender(image)}")
+# for image in test_images:
+#     print(f"Görsel: {image}, Tahmin Edilen Cinsiyet: {predict_gender(image)}")
 
 
-show_classification_results(y_true=train_generator.classes, y_pred=train_generator.classes)
+y_true = validation_generator.classes
 
+# Generate predictions
+y_pred = model.predict(validation_generator)
+y_pred = (y_pred > 0.5).astype(int).flatten()  # Convert probabilities to binary class labels
+
+show_classification_results(y_true, y_pred)
+
+
+def show_random_validation_images(model, val_generator, class_names, image_size=IMAGE_SIZE):
+    """Pick 3 random validation images, predict their labels, and display true vs. predicted."""
+    # Select 3 random indices from validation dataset
+    random_indices = random.sample(range(len(val_generator.filenames)), 3)
+
+    plt.figure(figsize=(10, 4))
+
+    for i, idx in enumerate(random_indices):
+        # Load image & true label
+        img_path = os.path.join(validation_dir, val_generator.filenames[idx])  # Full path
+        img = tf.keras.preprocessing.image.load_img(img_path, target_size=image_size)
+        img_array = tf.keras.preprocessing.image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0) / 255.0  # Normalize
+
+        true_label = val_generator.classes[idx]  # Get true class index
+        true_label_str = class_names[true_label]  # Convert index to class name
+
+        # Predict
+        prediction = model.predict(img_array)
+        predicted_label = "MEN" if prediction < 0.5 else "WOMAN"
+
+        # Display image with true and predicted labels
+        plt.subplot(1, 3, i + 1)
+        plt.imshow(img)
+        plt.title(f"True: {true_label_str}, Predicted: {predicted_label}")
+        plt.axis("off")
+
+    plt.show()
+
+
+# Get class names from training dataset
+class_names = list(train_generator.class_indices.keys())  # ✅ Converts to a list
+
+# Call function to display 3 random images with true and predicted labels
+show_random_validation_images(model, validation_generator, class_names)
+
+print(model.summary())
